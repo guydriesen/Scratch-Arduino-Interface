@@ -2,7 +2,9 @@ package sai.dm;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
@@ -15,6 +17,7 @@ import org.springframework.statemachine.annotation.WithStateMachine;
 import org.springframework.stereotype.Component;
 
 import lombok.Getter;
+import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import sai.api.DeviceManager;
 import sai.api.SerialPortListener;
@@ -37,11 +40,8 @@ public class DeviceManagerImpl implements DeviceManager {
 	@Autowired private PinValueMapper pinValueMapper;
 	@Autowired private PinModeMapper pinModeMapper;
 
-	@Getter private String error;
-
-	private void appendError(final String error) {
-		this.error = this.error == null ? error : this.error + "; " + error;
-	}
+	@Getter(onMethod=@__({@Override, @Synchronized})) private volatile Set<Integer> busyIds = new HashSet<>();
+	@Getter(onMethod=@__({@Override})) private volatile List<String> errors = new ArrayList<>();
 
 	@PostConstruct
 	public void init() {
@@ -54,8 +54,15 @@ public class DeviceManagerImpl implements DeviceManager {
 		});
 	}
 
+	private void clear() {
+		busyIds.clear();
+		errors.clear();
+	}
+
 	@Override
 	public void connect(String port) {
+		log.info("Connect device...");
+		clear();
 		stateMachine.sendEvent(MessageBuilder
 				.withPayload(Events.CONNECT)
 				.setHeader(Variables.PORT.toString(), port)
@@ -64,24 +71,31 @@ public class DeviceManagerImpl implements DeviceManager {
 
 	@Override
 	public void disconnect() {
+		log.info("Disconnect device...");
+		clear();
 		stateMachine.sendEvent(Events.DISCONNECT);
 	}
 
 	@Override
 	public void reset() {
-		log.info("Reseting...");
-		error = null;
+		log.info("Reset device...");
+		clear();
 		stateMachine.sendEvent(Events.RESET);
 	}
 
+	private boolean isConnected() {
+		return stateMachine.sendEvent(Events.CONNECTED);
+	}
+
 	private boolean notConnected() {
-		return !stateMachine.sendEvent(Events.CONNECTED);
+		return !isConnected();
 	}
 
 	@Override
 	public List<PinValue> getPinValues() {
-		IODevice device = (IODevice) stateMachine.getExtendedState().getVariables().get(Variables.DEVICE);
 		if (notConnected()) return null;
+		IODevice device = (IODevice) stateMachine.getExtendedState().getVariables().get(Variables.DEVICE);
+		if (device == null) return null;
 		List<PinValue> pins = new ArrayList<>();
 		for (Pin pin : device.getPins()) {
 			pins.add(pinValueMapper.map(pin));
@@ -91,8 +105,9 @@ public class DeviceManagerImpl implements DeviceManager {
 
 	@Override
 	public void configurePin(int pinNumber, PinMode pinMode) {
-		IODevice device = (IODevice) stateMachine.getExtendedState().getVariables().get(Variables.DEVICE);
 		if (notConnected()) return;
+		IODevice device = (IODevice) stateMachine.getExtendedState().getVariables().get(Variables.DEVICE);
+		if (device == null) return;
 		Pin.Mode mode = pinModeMapper.map(pinMode);
 		try {
 			switch (mode) {
@@ -104,52 +119,58 @@ public class DeviceManagerImpl implements DeviceManager {
 				break;
 			default:
 				String error = "Unsupported pin mode: " + pinMode;
-				appendError(error);
+				errors.add(0, error);
 				log.error(error);
 				break;
 			}
 		} catch (IllegalArgumentException | IOException e) {
 			String error = "Failed configuring pin " + pinNumber + " to " + pinMode;
-			appendError(error);
+			errors.add(0, error);
 			log.error(error, e);
 		}
 	}
 
 	@Override
 	public void setDigitalOutput(int pinNumber, boolean value) {
-		IODevice device = (IODevice) stateMachine.getExtendedState().getVariables().get(Variables.DEVICE);
 		if (notConnected()) return;
+		IODevice device = (IODevice) stateMachine.getExtendedState().getVariables().get(Variables.DEVICE);
+		if (device == null) return;
 		Pin pin = device.getPin(pinNumber);
 		try {
 			pin.setValue(value ? 1 : 0);
 		} catch (IllegalStateException | IOException e) {
-			error = "Failed setting pin " + pinNumber + " to " + value;
+			String error = "Failed setting pin " + pinNumber + " to " + value;
+			errors.add(0, error);
 			log.error(error, e);
 		}
 	}
 
 	@Override
 	public void setPwmOutput(int pinNumber, int value) {
-		IODevice device = (IODevice) stateMachine.getExtendedState().getVariables().get(Variables.DEVICE);
 		if (notConnected()) return;
+		IODevice device = (IODevice) stateMachine.getExtendedState().getVariables().get(Variables.DEVICE);
+		if (device == null) return;
 		Pin pin = device.getPin(pinNumber);
 		try {
 			pin.setValue(value);
 		} catch (IllegalStateException | IOException e) {
-			error = "Failed setting pin " + pinNumber + " to " + value;
+			String error = "Failed setting pin " + pinNumber + " to " + value;
+			errors.add(0, error);
 			log.error(error, e);
 		}
 	}
 
 	@Override
 	public void setServoOutput(int pinNumber, int value) {
-		IODevice device = (IODevice) stateMachine.getExtendedState().getVariables().get(Variables.DEVICE);
 		if (notConnected()) return;
+		IODevice device = (IODevice) stateMachine.getExtendedState().getVariables().get(Variables.DEVICE);
+		if (device == null) return;
 		Pin pin = device.getPin(pinNumber);
 		try {
 			pin.setValue(value);
 		} catch (IllegalStateException | IOException e) {
-			error = "Failed setting pin " + pinNumber + " to " + value;
+			String error = "Failed setting pin " + pinNumber + " to " + value;
+			errors.add(0, error);
 			log.error(error, e);
 		}
 	}

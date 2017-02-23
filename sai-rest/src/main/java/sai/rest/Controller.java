@@ -51,15 +51,26 @@ public class Controller {
 		List<PinValue> pinValues = device.getPinValues();
 
 		if (pinValues == null) // Board not connected
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(null);
 
 		for (PinValue pinValue : pinValues)
 			resp.getSensors().add(SensorMapper.map(pinValue));
 
-		if (device.getError() != null)
-			resp.setError(device.getError());
+		resp.getBusyIds().addAll(device.getBusyIds());
+		resp.getErrors().addAll(device.getErrors());
 
 		return ResponseEntity.ok(resp);
+	}
+
+	@RequestMapping(value = "/waitConnected/{1}")
+	public void waitConnected(@PathVariable(value = "1") int busyId) {
+		log.debug("Wait until connected, id: " + busyId);
+		/* Nothing to do.
+		 * As long as the arduino board is not connected an error is
+		 * returned on /poll. When the arduino is ready, /poll response
+		 * changes to 200 OK (with sensor values) and Scratch can 
+		 * continue.
+		 */
 	}
 
 	@RequestMapping(value = "/pinMode/{1}/{2}")

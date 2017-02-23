@@ -1,6 +1,7 @@
 package sai.api;
 
 import java.util.List;
+import java.util.Set;
 
 import sai.dto.PinMode;
 import sai.dto.PinValue;
@@ -13,7 +14,9 @@ public interface DeviceManager {
 
 	public void reset();
 
-	public String getError();
+	public Set<Integer> getBusyIds();
+
+	public List<String> getErrors();
 
 	public List<PinValue> getPinValues();
 

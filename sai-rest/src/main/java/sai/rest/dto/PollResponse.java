@@ -4,25 +4,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
-import lombok.Setter;
 
 public class PollResponse {
 
 	@Getter List<Sensor> sensors = new ArrayList<Sensor>();
-	@Getter @Setter String error;
-	@Getter List<Integer> busyLines = new ArrayList<Integer>();
+	@Getter List<Integer> busyIds = new ArrayList<Integer>();
+	@Getter List<String> errors = new ArrayList<String>();
 
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		for (Sensor sensor : sensors)
 			sb.append(sensor);
-		if (error != null && !error.isEmpty())
-			sb.append("_problem ").append(error).append("\n");
-		if (!busyLines.isEmpty()) {
+		if (!busyIds.isEmpty()) {
 			sb.append("_busy");
-			for (int busyLine : busyLines)
-				sb.append(" ").append(busyLine);
+			for (int busy : busyIds)
+				sb.append(" ").append(busy);
+			sb.append("\n");
+		}
+		if (!errors.isEmpty()) {
+			sb.append("_problem");
+			for (String error : errors)
+				sb.append(" ").append(error);
 			sb.append("\n");
 		}
 		return sb.toString();
