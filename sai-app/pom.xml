@@ -23,6 +23,22 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>de.jutzig</groupId>
+        <artifactId>github-release-plugin</artifactId>
+        <configuration>
+          <repositoryId>guydriesen/ScratchArduinoInterface</repositoryId>
+          <overwriteArtifact>true</overwriteArtifact>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>deploy</phase>
+            <goals>
+              <goal>release</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
