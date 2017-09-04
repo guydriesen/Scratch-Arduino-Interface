@@ -131,6 +131,21 @@ public class DeviceManagerImpl implements DeviceManager {
 	}
 
 	@Override
+	public void configureServoPin(int pinNumber, int minPulse, int maxPulse) {
+		if (notConnected()) return;
+		IODevice device = (IODevice) stateMachine.getExtendedState().getVariables().get(Variables.DEVICE);
+		if (device == null) return;
+		try {
+			device.getPin(pinNumber).setServoMode(minPulse, maxPulse);
+		} catch (IllegalArgumentException | IOException e) {
+			String error = "Failed configuring pin " + pinNumber + " to " + PinMode.SERVO
+					+ " with minPulse " + minPulse + " & maxPulse " + maxPulse;
+			errors.add(0, error);
+			log.error(error, e);
+		}
+	}
+
+	@Override
 	public void setDigitalOutput(int pinNumber, boolean value) {
 		if (notConnected()) return;
 		IODevice device = (IODevice) stateMachine.getExtendedState().getVariables().get(Variables.DEVICE);

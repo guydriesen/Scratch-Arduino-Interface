@@ -97,10 +97,10 @@ public class Controller {
 		device.configurePin(pinNumber, PinMode.PWM);
 	}
 
-	@RequestMapping(value = "/pinModeServo/{1}")
-	public void pinModeServo(@PathVariable(value = "1") int pinNumber) {
-		log.debug("Configure pin " + pinNumber + " as servo");
-		device.configurePin(pinNumber, PinMode.SERVO);
+	@RequestMapping(value = "/pinModeServo/{1}/{2}/{3}")
+	public void pinModeServo(@PathVariable(value = "1") int pinNumber, @PathVariable(value = "2") int minPulse, @PathVariable(value = "3") int maxPulse) {
+		log.debug("Configure pin " + pinNumber + " as servo with minPulse " + minPulse + " & maxPulse " + maxPulse);
+		device.configureServoPin(pinNumber, minPulse, maxPulse);
 	}
 
 	@RequestMapping(value = "/setOutputPin/{1}/{2}")

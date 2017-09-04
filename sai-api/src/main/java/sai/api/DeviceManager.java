@@ -22,6 +22,8 @@ public interface DeviceManager {
 
 	public void configurePin(int pinNumber, PinMode mode);
 
+	public void configureServoPin(int pinNumber,  int minPulse, int maxPulse);
+
 	public void setDigitalOutput(int pinNumber, boolean value);
 
 	public void setPwmOutput(int pinNumber, int value);

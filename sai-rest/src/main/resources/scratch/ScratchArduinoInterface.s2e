@@ -6,7 +6,7 @@
 		[" ", "configure pin %d.inputPins as input", "pinModeInput", 2],
 		[" ", "configure pin %d.outputPins as output", "pinModeOutput", 2],
 		[" ", "configure pin %d.pwmPins as pwm", "pinModePwm", 3],
-		[" ", "configure pin %d.servoPins as servo", "pinModeServo", 2],
+		[" ", "configure pin %d.servoPins as servo minPulse %n maxPulse %n", "pinModeServo", 2, 480, 2200],
 		[" ", "set output pin %d.outputPins to %m.boolean", "setOutputPin", 2, true],
 		[" ", "set output pin %d.outputPins to %b", "setOutputPin", 2],
 		[" ", "set pwm pin %d.pwmPins to value %n", "setPwmPin", 3, 0],
